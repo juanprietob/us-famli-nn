@@ -29,6 +29,7 @@
     "bluebird": "^3.7.2",
     "itk": "^10.2.1",
     "itk-image-pad-resample": "^0.1.0",
+    "med-img-reader": "^1.1.2",
     "underscore": "^1.9.1"
   },
   "devDependencies": {
