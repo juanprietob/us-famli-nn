@@ -1,0 +1,96 @@
+{
+	"classify_ga": {
+		"type": "class",
+		"description": "Classify images with fetal structures usable for biometry measurement and gestational age prediction. Returns array with probabilities",
+		"inputs": [{
+			"type": "image",
+			"size": [1000, 750],
+			"components": 1,
+			"linear_interpolation": true
+		}],
+		"outputs": [{
+			"type": "array"
+		}],
+		"labels": ["head", "fetus", "femur", "abdomen"],
+		"responses": ["classify_ga_block0", "classify_ga_block1", "classify_ga_block2", "classify_ga_block3", "classify_ga_block4", "classify_ga_fc"]
+	},
+	"classify_ga_block0": {
+		"type": "image",
+		"inputs": [{
+			"type": "image",
+			"size": [1000, 750],
+			"components": 1
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	},
+	"classify_ga_block1": {
+		"type": "image",
+		"inputs": [{
+			"type": "image",
+			"size": [1000, 750],
+			"components": 1
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	},
+	"classify_ga_block2": {
+		"type": "image",
+		"inputs": [{
+			"type": "image",
+			"size": [1000, 750],
+			"components": 1
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	},
+	"classify_ga_block3": {
+		"type": "image",
+		"inputs": [{
+			"type": "image",
+			"size": [1000, 750],
+			"components": 1
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	},
+	"classify_ga_block4": {
+		"type": "image",
+		"inputs": [{
+			"type": "image",
+			"size": [1000, 750],
+			"components": 1
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	},
+	"classify_ga_fc": {
+		"type": "image",
+		"inputs": [{
+			"type": "image",
+			"size": [1000, 750],
+			"components": 1
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	},
+	"remove_calipers": {
+		"type": "image",
+		"description": "Remove the calipers and text from an ultrasound image. Keeps the ultrasound only",
+		"inputs": [{
+			"type": "image",
+			"size": [1000, 750],
+			"components": 1,
+			"linear_interpolation": true
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	}
+}

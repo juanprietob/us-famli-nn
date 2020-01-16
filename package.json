@@ -1,0 +1,40 @@
+{
+  "name": "us-famli-nn",
+  "version": "0.0.1",
+  "description": "Trained networks for the Ultrasound Fetal Age Machine Learning Initiative",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "lab -v -m 120000 test/test.js",
+    "build": "rollup -c"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/juanprietob/US-famli.git"
+  },
+  "keywords": [
+    "ultrasound",
+    "machine",
+    "learning",
+    "fetal",
+    "biometry"
+  ],
+  "author": "juanprietob@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/juanprietob/US-famli/issues"
+  },
+  "homepage": "https://github.com/juanprietob/US-famli#readme",
+  "dependencies": {
+    "@tensorflow/tfjs-node": "^1.5.1",
+    "bluebird": "^3.7.2",
+    "itk": "^10.2.1",
+    "itk-image-pad-resample": "^0.1.0",
+    "underscore": "^1.9.1"
+  },
+  "devDependencies": {
+    "@hapi/lab": "^22.0.2",
+    "@rollup/plugin-json": "^4.0.1",
+    "lab": "^18.0.2",
+    "rollup": "^1.29.0"
+  }
+}
