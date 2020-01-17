@@ -4,6 +4,7 @@ const MedImgReader = require('med-img-reader');
 const ImgPadResampleLib = require('itk-image-pad-resample');
 const argv = require('minimist')(process.argv.slice(2));
 const _ = require('underscore');
+const fs = require('fs');
 
 const help = function(){
     console.error("Help: Run prediction in the ultrasound images");
@@ -19,6 +20,7 @@ if(argv["h"] || argv["help"] || !argv["img"]){
 }
 
 var inputFileName = argv["img"];
+var predictionType = argv["type"]? argv["type"] : "remove_calipers";
 var outputFileName = argv["out"]? argv["out"] : "out.nrrd";
 
 const medimgreader = new MedImgReader();
@@ -35,11 +37,21 @@ imgpad.SetIsoSpacingOn();
 imgpad.Update();
 var img_out = imgpad.GetOutput();
 
-
-
-// console.log("Writing:", outputFileName);
-
-// const writer = new MedImgReader();
-// writer.SetFilename(outputFileName);
-// writer.SetInput(img_out)
-// writer.WriteImage();
+var classPrediction = new RunPredictionLib();
+classPrediction.setPredictionType(predictionType);
+classPrediction.setInput(img_out);
+classPrediction.predict()
+.then((outputs)=>{
+	_.each(outputs, (o, i)=>{
+		if(classPrediction.getModelDescription().outputs[i].type == "image"){
+			console.log("Writing:", outputFileName);
+			const writer = new MedImgReader();
+			writer.SetFilename(outputFileName);
+			writer.SetInput(o)
+			writer.WriteImage();		
+		}else{
+			console.log("Writing:", outputFileName);
+			fs.writeFileSync(outputFileName, o.toString());
+		}
+	});
+});
