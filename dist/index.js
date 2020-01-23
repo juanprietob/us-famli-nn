@@ -261,7 +261,13 @@
 			.then((tf_img)=>{
 				var unstack = tf_img.unstack(tf_img.shape.length - 1);
 				return Promise.map(unstack, (u)=>{
-					return self.tensorToImage(u.reshape([...u.shape, 1]));
+					return self.tensorToImage(u.reshape([...u.shape, 1]))
+					.then((out_img)=>{
+						out_img.origin = in_img.origin;
+						out_img.spacing = in_img.spacing;
+						out_img.direction = in_img.direction;
+						return out_img;
+					});
 				});
 			})
 			.then(function(u){
