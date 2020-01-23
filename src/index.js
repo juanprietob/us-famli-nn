@@ -136,7 +136,12 @@ class USFamliLib {
 					if(self.inputs[index] && self.inputs[index].imageType && self.inputs[index].imageType.dimension == out_img.imageType.dimension){
 						const in_img = self.inputs[index];
 						out_img.origin = in_img.origin;
-						out_img.spacing = in_img.spacing;
+						out_img.spacing = _.map(in_img.spacing, (s, i)=>{
+							if(out_img.size[i] && out_img.size[i] > 0){
+								return (in_img.size[i]*s)/out_img.size[i];	
+							}
+							return 1;
+						});
 						out_img.direction = in_img.direction;
 						return out_img;
 					}

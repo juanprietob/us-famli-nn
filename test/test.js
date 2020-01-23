@@ -1,5 +1,4 @@
-const readImageLocalFileSync = require('itk/readImageLocalFileSync');
-const writeImageLocalFileSync = require('itk/writeImageLocalFileSync');
+const MedImgReader = require('med-img-reader');
 const Lab = require('@hapi/lab');
 const lab = exports.lab = Lab.script();
 const path = require('path');
@@ -13,7 +12,10 @@ lab.experiment("Test nn-prediction-lib", function(){
 
         var inputFileName = path.join(__dirname, 'us1.nrrd');
 		var outputFileName = path.join(__dirname, 'us1_out.nrrd');
-		const in_img = readImageLocalFileSync(inputFileName);
+		const medImgReader = new MedImgReader();
+		medImgReader.SetFilename(inputFileName);
+		medImgReader.ReadImage();
+		const in_img = medImgReader.GetOutput();
 		
 		const prediction = new RunPredictionLib();
 		prediction.setInput(in_img);
@@ -22,7 +24,10 @@ lab.experiment("Test nn-prediction-lib", function(){
 		.then(function(outputs){
 			_.each(outputs, function(output){
 				if(output.name == "Image"){
-					writeImageLocalFileSync(true, output, outputFileName);	
+					const writer = new MedImgReader();
+					writer.SetFilename(outputFileName);
+					writer.SetInput(output);
+					writer.WriteImage();
 				}
 			})
 			_.each(outputs, function(output){
@@ -32,6 +37,33 @@ lab.experiment("Test nn-prediction-lib", function(){
 					prediction.setPredictionType('classify_ga');
 				}
 			})
+		});
+        
+    });
+
+  	lab.test('returns true when an image is predicted', function(){
+
+        var inputFileName = path.join(__dirname, 'us1.nrrd');
+		var outputFileName = path.join(__dirname, 'us1_out.nrrd');
+		const medImgReader = new MedImgReader();
+		medImgReader.SetFilename(inputFileName);
+		medImgReader.ReadImage();
+		const in_img = medImgReader.GetOutput();
+		
+		const prediction = new RunPredictionLib();
+		prediction.setInput(in_img);
+		prediction.setPredictionType('classify_ga_block4');
+		return prediction.predict()
+		.then(function(outputs){
+			_.each(outputs, function(output){
+				if(output.name == "Image"){
+					const writer = new MedImgReader();
+					writer.SetFilename(outputFileName);
+					writer.SetInput(output);
+					writer.WriteImage();
+				}
+			})
+			return true;
 		});
         
     });

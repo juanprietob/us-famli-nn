@@ -2,6 +2,7 @@
 
 const MedImgReader = require('med-img-reader');
 const ImgPadResampleLib = require('itk-image-pad-resample');
+const RunPredictionLib = require('..');
 const argv = require('minimist')(process.argv.slice(2));
 const _ = require('underscore');
 const fs = require('fs');
