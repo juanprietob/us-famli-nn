@@ -1,6 +1,6 @@
 {
   "name": "us-famli-nn",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Trained networks for the Ultrasound Fetal Age Machine Learning Initiative",
   "main": "dist/index.js",
   "scripts": {
