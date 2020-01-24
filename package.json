@@ -27,6 +27,7 @@
   "dependencies": {
     "@tensorflow/tfjs-node": "^1.5.1",
     "bluebird": "^3.7.2",
+    "csv-stringify": "^5.3.6",
     "itk": "^10.2.1",
     "itk-image-pad-resample": "^0.1.0",
     "med-img-reader": "^1.1.2",
