@@ -336,6 +336,7 @@
 		}
 		predict(inputs){
 			const self = this;
+			tf.engine().startScope();
 			return self.loadSavedModel(self.predictionType)
 			.then(function(m){
 				return self.checkInputs(inputs, m.model_description.inputs)
@@ -343,8 +344,8 @@
 					x = x[0];
 					x = x.reshape([1, ...x.shape]);
 					var y = m.model.predict(x);
-					return self.checkOutputs(inputs, m.model_description.outputs, y.reshape(y.shape.slice(1)));
-				})
+					return self.checkOutputs(inputs, m.model_description.outputs, y.reshape(y.shape.slice(1)))
+					.then((outputs)=>{tf.engine().endScope(); return outputs});			})
 			})
 		}
 	}

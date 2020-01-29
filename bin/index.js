@@ -9,6 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const Promise = require('bluebird');
 const csvstringify = require('csv-stringify');
+const { spawn } = require('child_process');
 
 const help = function(){
     console.error("Help: Run prediction in the ultrasound images");
@@ -83,11 +84,20 @@ const runPrediction = (inputFileName, predictionLibs, outputFileName)=>{
 	try{
 		console.log("Reading:", inputFileName)
 		
-		const medimgreader = new MedImgReader();
+		var medimgreader = new MedImgReader();
 		medimgreader.SetFilename(inputFileName);
 		medimgreader.ReadImage();
 		var in_img = medimgreader.GetOutput();
 		medimgreader.delete();
+
+		var imgpad = new ImgPadResampleLib();
+		imgpad.SetImage(in_img);
+		imgpad.SetOutputSize([1000, 750]);
+		imgpad.SetFitSpacingToOutputSizeOn();
+		imgpad.SetIsoSpacingOn();
+		imgpad.Update();
+		var in_img = imgpad.GetOutput();
+		imgpad.delete();
 
 		return Promise.bind({})
 		.then(()=>{
@@ -98,7 +108,6 @@ const runPrediction = (inputFileName, predictionLibs, outputFileName)=>{
 				return plib.predict([self.prev_output.output])
 				.then((outputs)=>{
 					var labels = plib.getModelDescription().labels? plib.getModelDescription().labels: undefined;
-					delete self.prev_output;
 					self.prev_output = {
 						type: plib.getModelDescription().outputs[0].type,
 						output: outputs[0],
