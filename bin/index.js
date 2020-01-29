@@ -48,19 +48,19 @@ const writeCSV = (outfilename, data_sub)=>{
 }
 
 const readDir = (dirname)=>{
-	const self = this;
-	return Promise.resolve(_.compact(_.flatten(_.map(fs.readdirSync(dirname), function(filename){
+	return Promise.map(fs.readdirSync(dirname), (filename)=>{
 	  var full_path = path.join(dirname, filename);
 	  var stats = fs.statSync(full_path);
 	  if(stats.isDirectory()){
-	    return _.flatten(self.readDir(full_path));
+	    return readDir(full_path);
 	  }else{
 	  	var ext = path.extname(full_path);
 	  	if(ext.match(new RegExp(/nrrd|nii|gz|dcm|jpg|png|mhd/))){
 	  		return full_path;
 	  	}
 	  }
-	}))));
+	})
+	.then((files)=>{return _.compact(_.flatten(files))});
 }
 
 const mkdirp = (dirname)=>{
@@ -78,70 +78,69 @@ const mkdirp = (dirname)=>{
 	return Promise.resolve();
 }
 
-const runPrediction = (inputFileName, predictionType, outputFileName)=>{
-	const medimgreader = new MedImgReader();
-	medimgreader.SetFilename(inputFileName);
-	medimgreader.ReadImage();
-	var in_img = medimgreader.GetOutput();
-
-	var imgpad = new ImgPadResampleLib();
-	imgpad.SetImage(in_img);
-	imgpad.SetOutputSize([1000, 750]);
-	imgpad.SetFitSpacingToOutputSizeOn();
-	imgpad.SetIsoSpacingOn();
-
-	imgpad.Update();
-	var img_out = imgpad.GetOutput();
-
-	if(!_.isArray(predictionType)){
-		predictionType = [predictionType];
-	}
-
-	return Promise
-	.bind({})
-	.then(()=>{
-		const self = this;
-		self.outputs = [img_out]
-		return Promise.map(predictionType, (pt, index)=>{
-			var classPrediction = new RunPredictionLib();
-			classPrediction.setPredictionType(pt);
-			classPrediction.setInput(self.outputs[index]);
-			return classPrediction.predict()
-			.then((outputs)=>{
-				self.outputs.push(outputs[0]);
-				var labels = classPrediction.getModelDescription().labels? classPrediction.getModelDescription().labels: undefined;
-				return {
-					type: classPrediction.getModelDescription().outputs[0].type,
-					output: outputs[0],
-					labels
-				};
-			});
-		}, {concurrency: 1})
-	})
-	.then((outputs)=>{	
-		var final_output = outputs[outputs.length - 1];
-		if(final_output.type == "image"){
-			if(outputFileName){
-				console.log("Writing:", outputFileName);
-				const writer = new MedImgReader();
-				writer.SetFilename(outputFileName);
-				writer.SetInput(final_output.output)
-				writer.WriteImage();
-			}
-			return final_output;
-		}else if(final_output.type == "array"){
-			var obj = _.object(final_output.labels, final_output.output);
-			obj["class"] = final_output.labels[_.indexOf(final_output.output, _.max(final_output.output))];
-			obj["img"] = inputFileName;
-			return obj;
-		}else{
-			return final_output;
-		}
+const runPrediction = (inputFileName, predictionLibs, outputFileName)=>{
+	
+	try{
+		console.log("Reading:", inputFileName)
 		
-	})
-	.catch((e)=>{
-		console.error(e)
-	})	
+		const medimgreader = new MedImgReader();
+		medimgreader.SetFilename(inputFileName);
+		medimgreader.ReadImage();
+		var in_img = medimgreader.GetOutput();
+		medimgreader.delete();
+
+		return Promise.bind({})
+		.then(()=>{
+			const self = this;
+			self.prev_output = {output: in_img};
+			return Promise.map(predictionLibs, (plib, index)=>{
+				console.log(plib.getPredictionType());
+				return plib.predict([self.prev_output.output])
+				.then((outputs)=>{
+					var labels = plib.getModelDescription().labels? plib.getModelDescription().labels: undefined;
+					delete self.prev_output;
+					self.prev_output = {
+						type: plib.getModelDescription().outputs[0].type,
+						output: outputs[0],
+						labels
+					};
+				});
+			}, {concurrency: 1})
+		})
+		.then(()=>{return this.prev_output;})
+		.then((final_output)=>{
+			if(final_output.type == "image"){
+				if(outputFileName){
+					console.log("Writing:", outputFileName);
+					const writer = new MedImgReader();
+					writer.SetFilename(outputFileName);
+					writer.SetInput(final_output.output)
+					writer.WriteImage();
+					writer.delete();
+				}
+				return final_output;
+			}else if(final_output.type == "array"){
+				var obj = _.object(final_output.labels, final_output.output);
+				obj["class"] = final_output.labels[_.indexOf(final_output.output, _.max(final_output.output))];
+				obj["img"] = inputFileName;
+				return obj;
+			}else{
+				return final_output;
+			}
+		})
+		.then((final_output)=>{
+			return final_output;
+		})
+		.catch((e)=>{
+			console.error(e)
+			return Promise.resolve(null);
+		})
+	}catch(e){
+		console.error(e);
+		return Promise.resolve(null);
+	}
+	
+	
 }
 
 var img = argv["img"];
@@ -156,6 +155,7 @@ Promise.resolve((()=>{
 			if(path.extname(out) == ""){
 				return Promise.map(filenames, (img)=>{
 					var outpath = path.normalize(img.replace(dirname, out + path.sep));
+					outpath = outpath.replace(path.extname(outpath), ".nrrd");
 					return mkdirp(path.dirname(outpath))
 					.then(()=>{
 						return {img, out: outpath};
@@ -169,9 +169,19 @@ Promise.resolve((()=>{
 	}
 })())
 .then((fobjs)=>{
-	return Promise.map(fobjs, (fobj)=>{
-		return runPrediction(fobj.img, predictionType, fobj.out);	
-	}, {concurrency: 1});
+	if(!_.isArray(predictionType)){
+		predictionType = [predictionType];
+	}
+	return Promise.map(predictionType, (pt)=>{
+		const classPrediction = new RunPredictionLib();
+		classPrediction.setPredictionType(pt);
+		return classPrediction;
+	})
+	.then((predictionLibs)=>{
+		return Promise.map(fobjs, (fobj)=>{
+			return runPrediction(fobj.img, predictionLibs, fobj.out);	
+		}, {concurrency: 1});	
+	});
 })
 .then((predictions)=>{
 	if(out && path.extname(out) == ".csv"){

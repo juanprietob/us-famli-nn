@@ -1,18 +1,13 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('bluebird'), require('underscore'), require('itk-image-pad-resample'), require('itk/ImageType'), require('itk/Image'), require('itk/Matrix'), require('itk/PixelTypes'), require('@tensorflow/tfjs-node'), require('path')) :
-	typeof define === 'function' && define.amd ? define(['bluebird', 'underscore', 'itk-image-pad-resample', 'itk/ImageType', 'itk/Image', 'itk/Matrix', 'itk/PixelTypes', '@tensorflow/tfjs-node', 'path'], factory) :
-	(global = global || self, global['us-famli-nn'] = factory(global.Promise, global._, global.ImgPadResampleLib, global.ImageType, global.Image, global.Matrix, global.PixelTypes, global.tf, global.path));
-}(this, (function (Promise, _, ImgPadResampleLib, ImageType, Image, Matrix, PixelTypes, tf, path) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('itk/ImageType'), require('itk/Image'), require('itk/Matrix'), require('itk/PixelTypes')) :
+	typeof define === 'function' && define.amd ? define(['itk/ImageType', 'itk/Image', 'itk/Matrix', 'itk/PixelTypes'], factory) :
+	(global = global || self, global['us-famli-nn'] = factory(global.ImageType, global.Image, global.Matrix, global.PixelTypes));
+}(this, (function (ImageType, Image, Matrix, PixelTypes) { 'use strict';
 
-	Promise = Promise && Promise.hasOwnProperty('default') ? Promise['default'] : Promise;
-	_ = _ && _.hasOwnProperty('default') ? _['default'] : _;
-	ImgPadResampleLib = ImgPadResampleLib && ImgPadResampleLib.hasOwnProperty('default') ? ImgPadResampleLib['default'] : ImgPadResampleLib;
 	ImageType = ImageType && ImageType.hasOwnProperty('default') ? ImageType['default'] : ImageType;
 	Image = Image && Image.hasOwnProperty('default') ? Image['default'] : Image;
 	Matrix = Matrix && Matrix.hasOwnProperty('default') ? Matrix['default'] : Matrix;
 	PixelTypes = PixelTypes && PixelTypes.hasOwnProperty('default') ? PixelTypes['default'] : PixelTypes;
-	tf = tf && tf.hasOwnProperty('default') ? tf['default'] : tf;
-	path = path && path.hasOwnProperty('default') ? path['default'] : path;
 
 	var classify_ga = {
 		type: "class",
@@ -187,11 +182,16 @@
 		remove_calipers: remove_calipers
 	};
 
+	const _ = require('underscore');
+	const tf = require('@tensorflow/tfjs-node');
+	const path = require('path');
+	const Promise = require('bluebird');
+	const ImgPadResampleLib = require('itk-image-pad-resample');
+
 	class USFamliLib {
 		constructor(){
 			this.models = ModelsDescription;
 			this.loadedModels = {};
-			this.inputs = [];
 			this.predictionType = '';
 		}
 		getModelDescription(){
@@ -201,15 +201,8 @@
 				return {};
 			}
 		}
-		addInput(input){
-			this.inputs.push_back(input);
-		}
-		setInput(input){
-			if(this.inputs.length == 0){
-				this.inputs.push(input);
-			}else{
-				this.inputs[0] = input;	
-			}
+		getPredictionType(){
+			return this.predictionType;
 		}
 		setPredictionType(prediction_type){
 			this.predictionType = prediction_type;
@@ -219,7 +212,6 @@
 			if(self.loadedModels[prediction_type]){
 				return Promise.resolve({model: self.loadedModels[prediction_type], model_description: self.models[prediction_type]});
 			}
-			
 			var model_path = path.join(__dirname, '../models', prediction_type + "_saved_model");
 			return tf.node.loadSavedModel(model_path)
 			.then(function(model){
@@ -282,10 +274,10 @@
 			}
 			return tf_img;
 		}
-		checkInputs(inputs_description){
+		checkInputs(inputs, inputs_description){
 			const self = this;
 			return Promise.all(_.map(inputs_description, function(description, index){
-				var input = self.inputs[index];
+				var input = inputs[index];
 				if(description.type == "image"){
 					if(_.isEqual(input.size, description.size)){
 						return self.imageToTensor(input)
@@ -299,20 +291,20 @@
 				return Promise.reject({"error": "Description type not supported", description});
 			}))
 		}
-		checkOutputs(outputs_description, y){
+		checkOutputs(inputs, outputs_description, y){
 			const self = this;
 			return Promise.map(outputs_description, (description, index)=>{
 				if(description.type == "image"){
 					return self.tensorToImage(y)
 					.then((out_img)=>{
-						if(self.inputs[index] && self.inputs[index].imageType && self.inputs[index].imageType.dimension == out_img.imageType.dimension){
-							const in_img = self.inputs[index];
+						if(inputs[index] && inputs[index].imageType && inputs[index].imageType.dimension == out_img.imageType.dimension){
+							const in_img = inputs[index];
 							out_img.origin = in_img.origin;
 							out_img.spacing = _.map(in_img.spacing, (s, i)=>{
 								if(out_img.size[i] && out_img.size[i] > 0){
 									return (in_img.size[i]*s)/out_img.size[i];	
 								}
-								return 1;
+								return s;
 							});
 							out_img.direction = in_img.direction;
 							return out_img;
@@ -329,7 +321,6 @@
 			
 		}
 		resampleImage(in_img, output_size, linear_interpolation){
-			
 			var imgpad = new ImgPadResampleLib();
 			imgpad.SetImage(in_img);
 			imgpad.SetOutputSize(output_size);
@@ -339,18 +330,20 @@
 				imgpad.SetInterpolationTypeToLinear();	
 			}
 			imgpad.Update();
-			return Promise.resolve(imgpad.GetOutput());
+			var img_out = imgpad.GetOutput();
+			imgpad.delete();
+			return Promise.resolve(img_out);
 		}
-		predict(){
+		predict(inputs){
 			const self = this;
 			return self.loadSavedModel(self.predictionType)
 			.then(function(m){
-				return self.checkInputs(m.model_description.inputs)
+				return self.checkInputs(inputs, m.model_description.inputs)
 				.then(function(x){
 					x = x[0];
 					x = x.reshape([1, ...x.shape]);
 					var y = m.model.predict(x);
-					return self.checkOutputs(m.model_description.outputs, y.reshape(y.shape.slice(1)));
+					return self.checkOutputs(inputs, m.model_description.outputs, y.reshape(y.shape.slice(1)));
 				})
 			})
 		}

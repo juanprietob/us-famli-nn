@@ -9,23 +9,23 @@
 // const tf = require('@tensorflow/tfjs-node');
 // const path = require('path');
 
-import Promise from 'bluebird'
-import _ from 'underscore'
-import ImgPadResampleLib from 'itk-image-pad-resample'
 import ImageType from 'itk/ImageType'
 import Image from 'itk/Image'
 import Matrix from 'itk/Matrix'
 import PixelTypes from 'itk/PixelTypes'
-import tf from '@tensorflow/tfjs-node'
-import path from 'path'
 
 import ModelsDescription from './models_description.json'
+
+const _ = require('underscore');
+const tf = require('@tensorflow/tfjs-node');
+const path = require('path');
+const Promise = require('bluebird');
+const ImgPadResampleLib = require('itk-image-pad-resample');
 
 class USFamliLib {
 	constructor(){
 		this.models = ModelsDescription;
 		this.loadedModels = {};
-		this.inputs = [];
 		this.predictionType = '';
 	}
 	getModelDescription(){
@@ -35,15 +35,8 @@ class USFamliLib {
 			return {};
 		}
 	}
-	addInput(input){
-		this.inputs.push_back(input);
-	}
-	setInput(input){
-		if(this.inputs.length == 0){
-			this.inputs.push(input)
-		}else{
-			this.inputs[0] = input;	
-		}
+	getPredictionType(){
+		return this.predictionType;
 	}
 	setPredictionType(prediction_type){
 		this.predictionType = prediction_type;
@@ -53,7 +46,6 @@ class USFamliLib {
 		if(self.loadedModels[prediction_type]){
 			return Promise.resolve({model: self.loadedModels[prediction_type], model_description: self.models[prediction_type]});
 		}
-		
 		var model_path = path.join(__dirname, '../models', prediction_type + "_saved_model");
 		return tf.node.loadSavedModel(model_path)
 		.then(function(model){
@@ -116,10 +108,10 @@ class USFamliLib {
 		}
 		return tf_img;
 	}
-	checkInputs(inputs_description){
+	checkInputs(inputs, inputs_description){
 		const self = this;
 		return Promise.all(_.map(inputs_description, function(description, index){
-			var input = self.inputs[index];
+			var input = inputs[index];
 			if(description.type == "image"){
 				if(_.isEqual(input.size, description.size)){
 					return self.imageToTensor(input)
@@ -133,20 +125,20 @@ class USFamliLib {
 			return Promise.reject({"error": "Description type not supported", description});
 		}))
 	}
-	checkOutputs(outputs_description, y){
+	checkOutputs(inputs, outputs_description, y){
 		const self = this;
 		return Promise.map(outputs_description, (description, index)=>{
 			if(description.type == "image"){
 				return self.tensorToImage(y)
 				.then((out_img)=>{
-					if(self.inputs[index] && self.inputs[index].imageType && self.inputs[index].imageType.dimension == out_img.imageType.dimension){
-						const in_img = self.inputs[index];
+					if(inputs[index] && inputs[index].imageType && inputs[index].imageType.dimension == out_img.imageType.dimension){
+						const in_img = inputs[index];
 						out_img.origin = in_img.origin;
 						out_img.spacing = _.map(in_img.spacing, (s, i)=>{
 							if(out_img.size[i] && out_img.size[i] > 0){
 								return (in_img.size[i]*s)/out_img.size[i];	
 							}
-							return 1;
+							return s;
 						});
 						out_img.direction = in_img.direction;
 						return out_img;
@@ -163,7 +155,6 @@ class USFamliLib {
 		
 	}
 	resampleImage(in_img, output_size, linear_interpolation){
-		
 		var imgpad = new ImgPadResampleLib();
 		imgpad.SetImage(in_img);
 		imgpad.SetOutputSize(output_size);
@@ -173,18 +164,20 @@ class USFamliLib {
 			imgpad.SetInterpolationTypeToLinear();	
 		}
 		imgpad.Update();
-		return Promise.resolve(imgpad.GetOutput());
+		var img_out = imgpad.GetOutput();
+		imgpad.delete();
+		return Promise.resolve(img_out);
 	}
-	predict(){
+	predict(inputs){
 		const self = this;
 		return self.loadSavedModel(self.predictionType)
 		.then(function(m){
-			return self.checkInputs(m.model_description.inputs)
+			return self.checkInputs(inputs, m.model_description.inputs)
 			.then(function(x){
 				x = x[0];
 				x = x.reshape([1, ...x.shape]);
 				var y = m.model.predict(x);
-				return self.checkOutputs(m.model_description.outputs, y.reshape(y.shape.slice(1)));
+				return self.checkOutputs(inputs, m.model_description.outputs, y.reshape(y.shape.slice(1)));
 			})
 		})
 	}
