@@ -13,14 +13,19 @@ import ImageType from 'itk/ImageType'
 import Image from 'itk/Image'
 import Matrix from 'itk/Matrix'
 import PixelTypes from 'itk/PixelTypes'
-
 import ModelsDescription from './models_description.json'
 
 const _ = require('underscore');
-const tf = require('@tensorflow/tfjs-node');
 const path = require('path');
 const Promise = require('bluebird');
 const ImgPadResampleLib = require('itk-image-pad-resample');
+try{
+	const tf = require('@tensorflow/tfjs-node-gpu');	
+}catch(e){
+	console.log(e)
+	const tf = require('@tensorflow/tfjs-node');	
+}
+
 
 class USFamliLib {
 	constructor(){
@@ -179,7 +184,7 @@ class USFamliLib {
 				x = x.reshape([1, ...x.shape]);
 				var y = m.model.predict(x);
 				return self.checkOutputs(inputs, m.model_description.outputs, y.reshape(y.shape.slice(1)))
-				.then((outputs)=>{tf.engine().endScope(); return outputs});;
+				.then((outputs)=>{tf.engine().endScope(); return outputs;});
 			})
 		})
 	}

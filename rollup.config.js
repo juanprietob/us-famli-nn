@@ -1,4 +1,5 @@
 import json from '@rollup/plugin-json';
+import alias from '@rollup/plugin-alias';
 
 module.exports = {
   input: 'src/index.js',
@@ -7,5 +8,12 @@ module.exports = {
     format: 'umd',
     name: 'us-famli-nn'
   },
-  plugins: [ json() ]
+  plugins: [
+  	json(),
+  	alias({
+  		entries: {
+  			'tfjs': '@tensorflow/tfjs-node'
+  		}
+  	})
+  ]
 };

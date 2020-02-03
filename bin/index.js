@@ -85,7 +85,7 @@ const runPrediction = (inputFileName, predictionLibs, outputFileName)=>{
 		console.log("Reading:", inputFileName)
 		
 		var medimgreader = new MedImgReader();
-		medimgreader.SetFilename(inputFileName);
+		medimgreader.SetFilename(fs.realpathSync(inputFileName));
 		medimgreader.ReadImage();
 		var in_img = medimgreader.GetOutput();
 		medimgreader.delete();
@@ -195,7 +195,7 @@ Promise.resolve((()=>{
 .then((predictions)=>{
 	if(out && path.extname(out) == ".csv"){
 		console.log("Writing:", out);
-		return writeCSV(out, predictions);
+		return writeCSV(out, _.compact(_.flatten(predictions)));
 	}
 })
 .catch((e)=>{
