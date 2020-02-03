@@ -19,12 +19,12 @@ const _ = require('underscore');
 const path = require('path');
 const Promise = require('bluebird');
 const ImgPadResampleLib = require('itk-image-pad-resample');
-try{
-	const tf = require('@tensorflow/tfjs-node-gpu');	
-}catch(e){
-	console.log(e)
+// try{
+	// const tf = require('@tensorflow/tfjs-node-gpu');	
+// }catch(e){
+	// console.log(e)
 	const tf = require('@tensorflow/tfjs-node');	
-}
+// }
 
 
 class USFamliLib {
