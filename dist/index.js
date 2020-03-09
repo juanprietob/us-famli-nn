@@ -179,8 +179,150 @@
 		classify_ga_block3: classify_ga_block3,
 		classify_ga_block4: classify_ga_block4,
 		classify_ga_fc: classify_ga_fc,
-		remove_calipers: remove_calipers
+		remove_calipers: remove_calipers,
+		"US-famli-flat-nrrd-cleaned_ga_only_64_AC_encoder": {
+		type: "image",
+		description: "Encode images for abdominal space",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					64,
+					64
+				],
+				components: 1,
+				linear_interpolation: true
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli-flat-nrrd-cleaned_ga_only_64_AC_generator": {
+		type: "image",
+		description: "Generate images for abdominal space",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					1,
+					1
+				],
+				components: 128
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli-flat-nrrd-cleaned_ga_only_64_BPD_encoder": {
+		type: "image",
+		description: "Encode images for abdominal space",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					64,
+					64
+				],
+				components: 1,
+				linear_interpolation: true
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli-flat-nrrd-cleaned_ga_only_64_BPD_generator": {
+		type: "image",
+		description: "Generate images for abdominal space",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					1,
+					1
+				],
+				components: 128
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli-flat-nrrd-cleaned_ga_only_64_FL_encoder": {
+		type: "image",
+		description: "Encode images for abdominal space",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					64,
+					64
+				],
+				components: 1,
+				linear_interpolation: true
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli-flat-nrrd-cleaned_ga_only_64_FL_generator": {
+		type: "image",
+		description: "Generate images for femur space",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					1,
+					1
+				],
+				components: 128
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli-flat-nrrd-cleaned_ga_only_high_res_resunet_64_512": {
+		type: "image",
+		description: "Generate high res images 64x64 -> 512x512",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					512,
+					512
+				],
+				components: 1,
+				rescale: [
+					0,
+					255
+				]
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	}
 	};
+
+	// const ImageType = require('itk/ImageType');
 
 	const _ = require('underscore');
 	const path = require('path');
@@ -199,6 +341,13 @@
 			this.models = ModelsDescription;
 			this.loadedModels = {};
 			this.predictionType = '';
+			this.image_reference = undefined;
+		}
+		setImageReference(image_reference){
+			this.image_reference = image_reference;
+		}
+		getImageReference(){
+			return this.image_reference;
 		}
 		getModelDescription(){
 			if(this.predictionType){
@@ -218,7 +367,8 @@
 			if(self.loadedModels[prediction_type]){
 				return Promise.resolve({model: self.loadedModels[prediction_type], model_description: self.models[prediction_type]});
 			}
-			var model_path = path.join(__dirname, '../models', prediction_type + "_saved_model");
+			var model_path = path.join(__dirname, '../models', prediction_type);
+			console.log("Loading:", model_path);
 			return tf.node.loadSavedModel(model_path)
 			.then(function(model){
 				self.loadedModels[prediction_type] = model;
@@ -230,6 +380,9 @@
 			
 			var size = [...tf_tensor.shape];
 			var num_components = size.pop();
+			if(size.length == 0){
+				size = [1,1];
+			}
 			var dimension = size.length;
 
 			var pixelType = PixelTypes.Scalar;
@@ -272,6 +425,9 @@
 				return _.flatten(u);
 			})
 		}
+		getTf(){
+			return tf;
+		}
 		checkComponents(tf_img, num_components){
 			var shape = tf_img.shape;
 			if(shape[shape.length - 1] != num_components){
@@ -286,12 +442,9 @@
 				var input = inputs[index];
 				if(description.type == "image"){
 					if(_.isEqual(input.size, description.size)){
-						return self.imageToTensor(input)
-						.then((tf_img)=>{return self.checkComponents(tf_img, description.components)});
+						return input;
 					}else{
-						return self.resampleImage(input, description.size, description.linear_interpolation)
-						.then((res_img)=>{return self.imageToTensor(res_img)})
-						.then((tf_img)=>{return self.checkComponents(tf_img, description.components)});
+						return self.resampleImage(input, description.size, description.linear_interpolation);
 					}
 				}
 				return Promise.reject({"error": "Description type not supported", description});
@@ -303,8 +456,10 @@
 				if(description.type == "image"){
 					return self.tensorToImage(y)
 					.then((out_img)=>{
-						if(inputs[index] && inputs[index].imageType && inputs[index].imageType.dimension == out_img.imageType.dimension){
-							const in_img = inputs[index];
+						var image_reference = self.getImageReference();
+						image_reference = image_reference? image_reference : inputs[index];
+						if(image_reference && image_reference.imageType && image_reference.imageType.dimension == out_img.imageType.dimension){
+							const in_img = image_reference;
 							out_img.origin = in_img.origin;
 							out_img.spacing = _.map(in_img.spacing, (s, i)=>{
 								if(out_img.size[i] && out_img.size[i] > 0){
@@ -317,6 +472,8 @@
 						}
 						return out_img;
 					});
+				}else if(description.type == "tensor"){
+					return y;
 				}else{
 					return y.buffer()
 					.then((buf)=>{
@@ -346,14 +503,30 @@
 			return self.loadSavedModel(self.predictionType)
 			.then(function(m){
 				return self.checkInputs(inputs, m.model_description.inputs)
-				.then(function(x){
-					x = x[0];
-					x = x.reshape([1, ...x.shape]);
-					var y = m.model.predict(x);
-					return self.checkOutputs(inputs, m.model_description.outputs, y.reshape(y.shape.slice(1)))
-					.then((outputs)=>{tf.engine().endScope(); return outputs;});
+				.then((inputs)=>{
+					return Promise.all(_.map(m.model_description.inputs, function(description, index){
+						var input = inputs[index];
+						return self.imageToTensor(input)
+						.then((tf_img)=>{return self.checkComponents(tf_img, description.components)})
+						.then((tf_img)=>{
+							if(description.rescale){
+								return tf_img.sub(tf_img.min()).div(tf_img.max().sub(tf_img.min())).mul(description.rescale[1] - description.rescale[0]).add(description.rescale[0])
+							}
+							return tf_img;
+						});	
+					}))
+					.then(function(x){
+						x = x[0];
+						x = x.reshape([1, ...x.shape]);
+						var y = m.model.predict(x);
+						return self.checkOutputs(inputs, m.model_description.outputs, y.reshape(y.shape.slice(1)))
+						.then((outputs)=>{tf.engine().endScope(); return outputs;});
+					});
 				})
 			})
+		}
+		zeros(shape){
+			return tf.zeros(shape);
 		}
 	}
 

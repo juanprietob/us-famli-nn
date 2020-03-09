@@ -92,5 +92,93 @@
 		"outputs": [{
 			"type": "image"
 		}]
+	},
+	"US-famli-flat-nrrd-cleaned_ga_only_64_AC_encoder": {
+		"type": "image",
+		"description": "Encode images for abdominal space",
+		"inputs": [{
+			"type": "image",
+			"size": [64, 64],
+			"components": 1,
+			"linear_interpolation": true
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	},
+	"US-famli-flat-nrrd-cleaned_ga_only_64_AC_generator": {
+		"type": "image",
+		"description": "Generate images for abdominal space",
+		"inputs": [{
+			"type": "image",
+			"size": [1, 1],
+			"components": 128
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	},
+	"US-famli-flat-nrrd-cleaned_ga_only_64_BPD_encoder": {
+		"type": "image",
+		"description": "Encode images for abdominal space",
+		"inputs": [{
+			"type": "image",
+			"size": [64, 64],
+			"components": 1,
+			"linear_interpolation": true
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	},
+	"US-famli-flat-nrrd-cleaned_ga_only_64_BPD_generator": {
+		"type": "image",
+		"description": "Generate images for abdominal space",
+		"inputs": [{
+			"type": "image",
+			"size": [1, 1],
+			"components": 128
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	},
+	"US-famli-flat-nrrd-cleaned_ga_only_64_FL_encoder": {
+		"type": "image",
+		"description": "Encode images for abdominal space",
+		"inputs": [{
+			"type": "image",
+			"size": [64, 64],
+			"components": 1,
+			"linear_interpolation": true
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	},
+	"US-famli-flat-nrrd-cleaned_ga_only_64_FL_generator": {
+		"type": "image",
+		"description": "Generate images for femur space",
+		"inputs": [{
+			"type": "image",
+			"size": [1, 1],
+			"components": 128
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	},
+	"US-famli-flat-nrrd-cleaned_ga_only_high_res_resunet_64_512": {
+		"type": "image",
+		"description": "Generate high res images 64x64 -> 512x512",
+		"inputs": [{
+			"type": "image",
+			"size": [512, 512],
+			"components": 1,
+			"rescale": [0, 255]
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
 	}
 }

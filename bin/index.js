@@ -79,6 +79,17 @@ const mkdirp = (dirname)=>{
 	return Promise.resolve();
 }
 
+const runPredictionRec = (index, predictionLibs, input)=>{
+	if(index < predictionLibs.length){
+		return predictionLibs[index].predict([input])
+		.then((outputs)=>{
+			index++;
+			return runPredictionRec(index, predictionLibs, outputs[0]);
+		});
+	}
+	return input;
+}
+
 const runPrediction = (inputFileName, predictionLibs, outputFileName)=>{
 	
 	try{
@@ -90,33 +101,23 @@ const runPrediction = (inputFileName, predictionLibs, outputFileName)=>{
 		var in_img = medimgreader.GetOutput();
 		medimgreader.delete();
 
-		var imgpad = new ImgPadResampleLib();
-		imgpad.SetImage(in_img);
-		imgpad.SetOutputSize([1000, 750]);
-		imgpad.SetFitSpacingToOutputSizeOn();
-		imgpad.SetIsoSpacingOn();
-		imgpad.Update();
-		var in_img = imgpad.GetOutput();
-		imgpad.delete();
-
 		return Promise.bind({})
 		.then(()=>{
 			const self = this;
-			self.prev_output = {output: in_img};
-			return Promise.map(predictionLibs, (plib, index)=>{
-				console.log(plib.getPredictionType());
-				return plib.predict([self.prev_output.output])
-				.then((outputs)=>{
-					var labels = plib.getModelDescription().labels? plib.getModelDescription().labels: undefined;
-					self.prev_output = {
-						type: plib.getModelDescription().outputs[0].type,
-						output: outputs[0],
-						labels
-					};
-				});
-			}, {concurrency: 1})
+			var index = 0;
+
+			return runPredictionRec(index, predictionLibs, in_img)
+			.then((output)=>{
+				var plib = predictionLibs[predictionLibs.length - 1];
+				var labels = plib.getModelDescription().labels? plib.getModelDescription().labels: undefined;
+				return {
+					type: plib.getModelDescription().outputs[0].type,
+					output,
+					labels
+				}
+			});
+			
 		})
-		.then(()=>{return this.prev_output;})
 		.then((final_output)=>{
 			if(final_output.type == "image"){
 				if(outputFileName){
@@ -185,7 +186,7 @@ Promise.resolve((()=>{
 		const classPrediction = new RunPredictionLib();
 		classPrediction.setPredictionType(pt);
 		return classPrediction;
-	})
+	}, {concurrency: 1})
 	.then((predictionLibs)=>{
 		return Promise.map(fobjs, (fobj)=>{
 			return runPrediction(fobj.img, predictionLibs, fobj.out);	
