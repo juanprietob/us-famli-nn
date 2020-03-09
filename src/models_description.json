@@ -168,6 +168,31 @@
 			"type": "image"
 		}]
 	},
+	"US-famli-flat-nrrd-cleaned_ga_only_64_CRL_encoder": {
+		"type": "image",
+		"description": "Encode images for crown rump length space",
+		"inputs": [{
+			"type": "image",
+			"size": [64, 64],
+			"components": 1,
+			"linear_interpolation": true
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	},
+	"US-famli-flat-nrrd-cleaned_ga_only_64_CRL_generator": {
+		"type": "image",
+		"description": "Generate images for crown rump length space",
+		"inputs": [{
+			"type": "image",
+			"size": [1, 1],
+			"components": 128
+		}],
+		"outputs": [{
+			"type": "image"
+		}]
+	},
 	"US-famli-flat-nrrd-cleaned_ga_only_high_res_resunet_64_512": {
 		"type": "image",
 		"description": "Generate high res images 64x64 -> 512x512",
