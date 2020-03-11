@@ -350,6 +350,66 @@
 				type: "image"
 			}
 		]
+	},
+		"US-famli_predict_bpd-mask": {
+		type: "image",
+		description: "Predict a head mask",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					512,
+					512
+				],
+				components: 1,
+				linear_interpolation: true
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli_predict_ac-mask": {
+		type: "image",
+		description: "Predict a head mask",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					512,
+					512
+				],
+				components: 1,
+				linear_interpolation: true
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli_predict_fl-mask": {
+		type: "image",
+		description: "Predict a head mask",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					512,
+					512
+				],
+				components: 1,
+				linear_interpolation: true
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
 	}
 	};
 
