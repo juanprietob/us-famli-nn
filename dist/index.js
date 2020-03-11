@@ -190,8 +190,7 @@
 					64,
 					64
 				],
-				components: 1,
-				linear_interpolation: true
+				components: 1
 			}
 		],
 		outputs: [
@@ -229,8 +228,7 @@
 					64,
 					64
 				],
-				components: 1,
-				linear_interpolation: true
+				components: 1
 			}
 		],
 		outputs: [
@@ -268,8 +266,7 @@
 					64,
 					64
 				],
-				components: 1,
-				linear_interpolation: true
+				components: 1
 			}
 		],
 		outputs: [
@@ -307,8 +304,7 @@
 					64,
 					64
 				],
-				components: 1,
-				linear_interpolation: true
+				components: 1
 			}
 		],
 		outputs: [
