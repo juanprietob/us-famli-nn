@@ -193,14 +193,13 @@
 			"type": "image"
 		}]
 	},
-	"US-famli-flat-nrrd-cleaned_ga_only_high_res_resunet_64_512": {
+	"US-famli-flat-nrrd-cleaned_ga_only_64_512_super_res": {
 		"type": "image",
 		"description": "Generate high res images 64x64 -> 512x512",
 		"inputs": [{
 			"type": "image",
-			"size": [512, 512],
-			"components": 1,
-			"rescale": [0, 255]
+			"size": [64, 64],
+			"components": 1
 		}],
 		"outputs": [{
 			"type": "image"
