@@ -18,6 +18,7 @@ const help = function(){
     console.error("--img <input path to image>");
     console.error("--type <prediction type (accepted multiple types to concatenate the predictions)>");
     console.error("--out <output filename>");
+    console.error("--out_spc <set to this if specified, otherwise calculated>");
 }
 
 if(argv["h"] || argv["help"] || (!argv["img"] && !argv["dir"])){
@@ -90,7 +91,7 @@ const runPredictionRec = (index, predictionLibs, input)=>{
 	return input;
 }
 
-const runPrediction = (inputFileName, predictionLibs, outputFileName)=>{
+const runPrediction = (inputFileName, predictionLibs, outputFileName, out_spc)=>{
 	
 	try{
 		console.log("Reading:", inputFileName)
@@ -124,6 +125,9 @@ const runPrediction = (inputFileName, predictionLibs, outputFileName)=>{
 					console.log("Writing:", outputFileName);
 					const writer = new MedImgReader();
 					writer.SetFilename(outputFileName);
+					if(out_spc){
+						final_output.output.spacing = out_spc;
+					}
 					writer.SetInput(final_output.output)
 					writer.WriteImage();
 					writer.delete();
@@ -157,6 +161,10 @@ var img = argv["img"];
 var dirname = argv["dir"];
 var predictionType = argv["type"]? argv["type"] : ["remove_calipers"];
 var out = argv["out"]? argv["out"] : "out.nrrd";
+var out_spc = argv["out_spc"];
+if(out_spc){
+	out_spc = out_spc.split(",").map(Number);
+}
 
 Promise.resolve((()=>{
 	if(dirname){
@@ -189,7 +197,7 @@ Promise.resolve((()=>{
 	}, {concurrency: 1})
 	.then((predictionLibs)=>{
 		return Promise.map(fobjs, (fobj)=>{
-			return runPrediction(fobj.img, predictionLibs, fobj.out);	
+			return runPrediction(fobj.img, predictionLibs, fobj.out, out_spc);	
 		}, {concurrency: 1});	
 	});
 })
