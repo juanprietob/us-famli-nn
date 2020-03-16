@@ -239,7 +239,7 @@
 	},
 		"US-famli-flat-nrrd-cleaned_ga_only_64_BPD_generator": {
 		type: "image",
-		description: "Generate images for abdominal space",
+		description: "Generate images for head",
 		inputs: [
 			{
 				type: "image",
@@ -258,7 +258,7 @@
 	},
 		"US-famli-flat-nrrd-cleaned_ga_only_64_FL_encoder": {
 		type: "image",
-		description: "Encode images for abdominal space",
+		description: "Encode images for femur",
 		inputs: [
 			{
 				type: "image",
@@ -277,7 +277,7 @@
 	},
 		"US-famli-flat-nrrd-cleaned_ga_only_64_FL_generator": {
 		type: "image",
-		description: "Generate images for femur space",
+		description: "Generate images for femur",
 		inputs: [
 			{
 				type: "image",
@@ -296,7 +296,7 @@
 	},
 		"US-famli-flat-nrrd-cleaned_ga_only_64_CRL_encoder": {
 		type: "image",
-		description: "Encode images for crown rump length space",
+		description: "Encode images for crown rump length",
 		inputs: [
 			{
 				type: "image",
@@ -315,7 +315,7 @@
 	},
 		"US-famli-flat-nrrd-cleaned_ga_only_64_CRL_generator": {
 		type: "image",
-		description: "Generate images for crown rump length space",
+		description: "Generate images for crown rump length",
 		inputs: [
 			{
 				type: "image",
@@ -403,6 +403,158 @@
 				],
 				components: 1,
 				linear_interpolation: true
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli-flat-nrrd-cleaned_ga_only_512_BPD_generator": {
+		type: "image",
+		description: "Generate images for head space",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					1,
+					1
+				],
+				components: 128
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli-flat-nrrd-cleaned_ga_only_64_512_BPD_generator": {
+		type: "image",
+		description: "RUNET generate images for head from low res images",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					64,
+					64
+				],
+				components: 1
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli-flat-nrrd-cleaned_ga_only_512_AC_generator": {
+		type: "image",
+		description: "Generate images for abdominal space",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					1,
+					1
+				],
+				components: 128
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli-flat-nrrd-cleaned_ga_only_64_512_AC_generator": {
+		type: "image",
+		description: "RUNET generate images for abdominal from low res images",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					64,
+					64
+				],
+				components: 1
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli-flat-nrrd-cleaned_ga_only_512_FL_generator": {
+		type: "image",
+		description: "Generate images for femur space",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					1,
+					1
+				],
+				components: 128
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli-flat-nrrd-cleaned_ga_only_64_512_FL_generator": {
+		type: "image",
+		description: "RUNET generate images for femur from low res images",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					64,
+					64
+				],
+				components: 1
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli-flat-nrrd-cleaned_ga_only_512_CRL_generator": {
+		type: "image",
+		description: "Generate images for crown rump length space",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					1,
+					1
+				],
+				components: 128
+			}
+		],
+		outputs: [
+			{
+				type: "image"
+			}
+		]
+	},
+		"US-famli-flat-nrrd-cleaned_ga_only_64_512_CRL_generator": {
+		type: "image",
+		description: "RUNET generate images for crown rump length from low res images",
+		inputs: [
+			{
+				type: "image",
+				size: [
+					64,
+					64
+				],
+				components: 1
 			}
 		],
 		outputs: [
@@ -599,6 +751,7 @@
 						var input = inputs[index];
 						return self.imageToTensor(input)
 						.then((tf_img)=>{return self.checkComponents(tf_img, description.components)})
+						.then((tf_img)=>{return tf_img.floor()})
 						.then((tf_img)=>{
 							if(description.rescale){
 								return tf_img.sub(tf_img.min()).div(tf_img.max().sub(tf_img.min())).mul(description.rescale[1] - description.rescale[0]).add(description.rescale[0])

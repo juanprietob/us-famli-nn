@@ -195,6 +195,7 @@ class USFamliLib {
 					var input = inputs[index];
 					return self.imageToTensor(input)
 					.then((tf_img)=>{return self.checkComponents(tf_img, description.components)})
+					.then((tf_img)=>{return tf_img.floor()})
 					.then((tf_img)=>{
 						if(description.rescale){
 							return tf_img.sub(tf_img.min()).div(tf_img.max().sub(tf_img.min())).mul(description.rescale[1] - description.rescale[0]).add(description.rescale[0])
