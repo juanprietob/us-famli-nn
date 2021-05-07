@@ -31,7 +31,7 @@
     "itk": "^10.2.1",
     "itk-image-pad-resample": "^1.0.0",
     "med-img-reader": "^1.3.0",
-    "underscore": "^1.9.1"
+    "underscore": "^1.12.1"
   },
   "devDependencies": {
     "@hapi/lab": "^22.0.2",
